@@ -66,6 +66,9 @@ app = Flask(__name__)
 def home(): return "Bot ishlamoqda!"
 
 if __name__ == '__main__':
-    threading.Thread(target=lambda: bot.infinity_polling(), daemon=True).start()
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    # Threading orqali botni va web serverni birga yuritish
+    threading.Thread(target=lambda: bot.infinity_polling(timeout=60, long_polling_timeout=60), daemon=True).start()
     
+    # Flask serverini ishga tushirish
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
