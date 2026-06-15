@@ -1,9 +1,21 @@
-import telebot
+import os
+import subprocess
+import sys
+
+# --- 🚀 KUTUBXONALARNI AVTOMATIK O'RNATISH ---
+# Render requirements.txt ni ko'rmasa ham, mana shu kod kutubxonalarni baribir o'rnatadi!
+try:
+    import telebot
+    from flask import Flask
+except ImportError:
+    print("Kutubxonalar topilmadi. Avtomatik o'rnatish boshlanmoqda...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "pyTelegramBotAPI", "flask"])
+    import telebot
+    from flask import Flask
+
 from telebot import types
 import json
-import os
 import threading
-from flask import Flask
 
 TOKEN = "8320449341:AAEPHiKR2b0jauEY-Sp9o1B0q3i4PijbRiQ"
 ADMIN_ID = 8910933168  
@@ -27,7 +39,7 @@ def start(message):
         markup.add(types.InlineKeyboardButton(info['name'], callback_data=f"view_{code}"))
     bot.send_message(message.chat.id, "Anime tanlang:", reply_markup=markup)
 
-# Render portni tekshirishi uchun kichik Flask server
+# Render uchun Flask server
 app = Flask(__name__)
 @app.route('/')
 def home():
@@ -39,7 +51,6 @@ def run_bot():
 
 if __name__ == '__main__':
     threading.Thread(target=run_bot, daemon=True).start()
-    # Render beradigan ixtiyoriy portni tinglaymiz
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-  
+    
