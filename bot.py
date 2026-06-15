@@ -2,16 +2,14 @@ import os
 import json
 import telebot
 from telebot import types
-from flask import Flask
-import threading
+from flask import Flask, request
 
 TOKEN = "8320449341:AAEPHiKR2b0jauEY-Sp9o1B0q3i4PijbRiQ"
 ADMIN_ID = 8910933168
-KANAL_ID = "@Anibassrasmiy"
 bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
 DB_FILE = 'anime_db.json'
 
-# Bazani yuklash va saqlash
 def load_db():
     if not os.path.exists(DB_FILE): return {}
     with open(DB_FILE, 'r', encoding='utf-8') as f: return json.load(f)
@@ -20,55 +18,54 @@ def save_db(data):
     with open(DB_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-# Admin uchun menu
+# --- ADMIN PANEL ---
 @bot.message_handler(commands=['admin'])
-def admin_cmd(message):
+def admin_panel(message):
     if message.from_user.id != ADMIN_ID: return
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add("➕ Anime qo'shish", "🔄 Ongoing", "✏️ Tahrirlash")
-    bot.send_message(message.chat.id, "Admin panel:", reply_markup=markup)
+    bot.send_message(message.chat.id, "Admin panel faol:", reply_markup=markup)
 
-# Guruh va lichka uchun global qidiruv
+# --- QIDIRUV (Lichka va Guruh) ---
 @bot.message_handler(func=lambda message: message.text and message.text.isdigit())
-def global_search(message):
+def search(message):
     db = load_db()
-    code = message.text
-    if code in db:
-        anime = db[code]
+    if message.text in db:
+        anime = db[message.text]
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("📺 Qismlarni ko'rish", callback_data=f"list_{code}"))
+        markup.add(types.InlineKeyboardButton("📺 Qismlarni ko'rish", callback_data=f"list_{message.text}"))
         bot.send_photo(message.chat.id, anime['photo'], caption=f"🎬 {anime['name']}", reply_markup=markup)
-    else:
-        bot.reply_to(message, "Anime topilmadi.")
 
-# CALLBACK TIZIMI (Sahifalash va video)
+# --- SAHIFALASH VA KO'RISH (CALLBACK) ---
 @bot.callback_query_handler(func=lambda call: True)
-def callback_handler(call):
+def callback(call):
     data = call.data.split('_')
-    action = data[0]
-    code = data[1]
+    action, code, *args = data
     db = load_db()
-
-    if action == "list": # Qismlar ro'yxatini chiqarish
+    
+    if action == "list":
         anime = db[code]
-        markup = types.InlineKeyboardMarkup(row_width=3)
-        for i, vid in enumerate(anime['videos']):
-            markup.add(types.InlineKeyboardButton(f"{i+1}-qism", callback_data=f"play_{code}_{i}"))
+        markup = types.InlineKeyboardMarkup(row_width=4)
+        for i in range(len(anime['videos'])):
+            markup.add(types.InlineKeyboardButton(str(i+1), callback_data=f"play_{code}_{i}"))
         bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=markup)
     
-    elif action == "play": # Videoni yuborish
-        idx = int(data[2])
+    elif action == "play":
+        idx = int(args[0])
         bot.send_video(call.message.chat.id, db[code]['videos'][idx])
 
-# WEB SERVER (Render uchun)
-app = Flask(__name__)
-@app.route('/')
-def home(): return "Bot ishlamoqda!"
+# --- WEBHOOK (409 Xatosini o'ldiradi) ---
+@app.route('/' + TOKEN, methods=['POST'])
+def get_msg():
+    update = telebot.types.Update.de_json(request.get_data().decode('utf-8'))
+    bot.process_new_updates([update])
+    return "!", 200
+
+@app.route("/")
+def webhook():
+    bot.remove_webhook()
+    bot.set_webhook(url=f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}")
+    return "Running!", 200
 
 if __name__ == '__main__':
-    # Threading orqali botni va web serverni birga yuritish
-    threading.Thread(target=lambda: bot.infinity_polling(timeout=60, long_polling_timeout=60), daemon=True).start()
-    
-    # Flask serverini ishga tushirish
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
