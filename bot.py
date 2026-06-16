@@ -1,29 +1,27 @@
 import telebot
-import json
 import os
+from flask import Flask, request
 
-# YANGI TOKENNI SHU YERGA YOZING
-TOKEN = "8320449341:AAFQsSl_cmoJLE7qVkNPTeWHjACMnufMLZI"
-ADMIN_ID = 8910933168
-DB_FILE = 'anime_db.json'
-
+TOKEN = "8320449341:AAHbrGME24j5ojTtH7URuNMeKlRdA9e2NkI"
 bot = telebot.TeleBot(TOKEN)
+server = Flask(__name__)
 
-# 1. Eski webhookni tozalash va yangi ulanishni himoyalash
-bot.remove_webhook()
+@server.route('/' + TOKEN, methods=['POST'])
+def get_message():
+    json_str = request.get_data().decode('UTF-8')
+    update = telebot.types.Update.de_json(json_str)
+    bot.process_new_updates([update])
+    return "OK", 200
 
-def load_db():
-    if not os.path.exists(DB_FILE): return {}
-    with open(DB_FILE, 'r', encoding='utf-8') as f: return json.load(f)
+@server.route("/")
+def index():
+    return "Bot ishlamoqda!"
 
-# Boshqa funksiyalar (admin, qo'shish, qidirish) avvalgidek qoladi...
-
-@bot.message_handler(commands=['start'])
-def start(message):
-    bot.send_message(message.chat.id, "Bot yangi token bilan ishga tushdi va faqat shu yerda faol!")
-
-# BOTNI ISHGA TUSHIRISH
-if __name__ == '__main__':
-    print("Bot ishga tushdi...")
-    # drop_pending_updates=True eski "Conflict"larni butunlay o'chiradi
-    bot.infinity_polling(timeout=10, long_polling_timeout=5, drop_pending_updates=True)
+if __name__ == "__main__":
+    # Render avtomatik beradigan PORT o'zgaruvchisidan foydalanamiz
+    port = int(os.environ.get('PORT', 5000))
+    # Webhookni o'rnatish
+    bot.remove_webhook()
+    # URL manzilingizni yozing (Render'dagi link)
+    bot.set_webhook(url='https://sizning-saytingiz.onrender.com/' + TOKEN)
+    server.run(host="0.0.0.0", port=port)
