@@ -2,11 +2,10 @@ import telebot
 import os
 from flask import Flask, request
 
-TOKEN = "8320449341:AAHbrGME24j5ojTtH7URuNMeK1RdA9e2NkI"
+TOKEN = "8320449341:AAHqt8d26UcoOe4dVbFiXnPG1RF0Cxu8SeM"
 bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
 
-# Webhook orqali xabarlarni qabul qilish
 @server.route('/' + TOKEN, methods=['POST'])
 def get_message():
     json_str = request.get_data().decode('UTF-8')
@@ -14,7 +13,6 @@ def get_message():
     bot.process_new_updates([update])
     return "!", 200
 
-# Bosh sahifa
 @server.route("/")
 def index():
     return "Bot ishlamoqda!"
