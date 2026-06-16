@@ -2,10 +2,11 @@ import telebot
 import os
 from flask import Flask, request
 
-TOKEN = "8320449341:AAHbrGME24j5ojTtH7URuNMeKlRdA9e2NkI"
+TOKEN = "8320449341:AAHbrGME24j5ojTtH7URuNMeK1RdA9e2NkI"
 bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
 
+# Webhook orqali xabarlarni qabul qilish
 @server.route('/' + TOKEN, methods=['POST'])
 def get_message():
     json_str = request.get_data().decode('UTF-8')
@@ -13,15 +14,14 @@ def get_message():
     bot.process_new_updates([update])
     return "!", 200
 
+# Bosh sahifa
 @server.route("/")
 def index():
     return "Bot ishlamoqda!"
 
-# Webhookni bir marta o'rnatish
+# Webhookni sozlash
+bot.remove_webhook()
+bot.set_webhook(url='https://jurayvbloo210-21.onrender.com/' + TOKEN)
+
 if __name__ == "__main__":
-    bot.remove_webhook()
-    # URL: Render sizga bergan havola (masalan: https://jurayvbloo210-21.onrender.com/)
-    # O'z manzilingizni shunga moslab yozing:
-    bot.set_webhook(url='https://YOUR-RENDER-APP-NAME.onrender.com/' + TOKEN)
-    
     server.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
