@@ -1,44 +1,29 @@
 import telebot
-import json
 import os
+from flask import Flask, request
 
 TOKEN = "8320449341:AAEPHiKR2b0jauEY-Sp9o1B0q3i4PijbRiQ"
-ADMIN_ID = 8910933168
-DB_FILE = 'anime_db.json'
 bot = telebot.TeleBot(TOKEN)
+server = Flask(__name__)
 
-def load_db():
-    if not os.path.exists(DB_FILE): return {}
-    with open(DB_FILE, 'r', encoding='utf-8') as f: return json.load(f)
+# Barcha kerakli handlerlar shu yerda bo'ladi
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.reply_to(message, "Bot Webhook orqali muvaffaqiyatli ishga tushdi!")
 
-def save_db(data):
-    with open(DB_FILE, 'w', encoding='utf-8') as f: json.dump(data, f, ensure_ascii=False, indent=4)
+@server.route('/' + TOKEN, methods=['POST'])
+def get_message():
+    json_str = request.get_data().decode('UTF-8')
+    update = telebot.types.Update.de_json(json_str)
+    bot.process_new_updates([update])
+    return "!", 200
 
-@bot.message_handler(commands=['admin'])
-def admin_menu(message):
-    if message.from_user.id != ADMIN_ID: return
-    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-    markup.add("➕ Anime qo'shish")
-    bot.send_message(message.chat.id, "Admin panel faol:", reply_markup=markup)
+@server.route("/")
+def webhook():
+    bot.remove_webhook()
+    # Quyidagi URLni o'z Render URL manzilingizga o'zgartiring
+    bot.set_webhook(url='https://anime-bot-name.onrender.com/' + TOKEN)
+    return "Webhook sozlandi!", 200
 
-@bot.message_handler(func=lambda message: message.text == "➕ Anime qo'shish")
-def ask_name(message):
-    if message.from_user.id != ADMIN_ID: return
-    msg = bot.send_message(message.chat.id, "Anime nomini yuboring:")
-    bot.register_next_step_handler(msg, lambda m: get_name(m))
-
-def get_name(message):
-    name = message.text
-    msg = bot.send_message(message.chat.id, "Endi kodini yuboring:")
-    bot.register_next_step_handler(msg, lambda m: get_code(m, name))
-
-def get_code(message, name):
-    code = message.text
-    db = load_db()
-    db[code] = {"name": name}
-    save_db(db)
-    bot.send_message(message.chat.id, f"✅ Saqlandi: {name} (Kod: {code})")
-
-bot.remove_webhook()
-print("Bot ishga tushdi...")
-bot.infinity_polling()
+if __name__ == "__main__":
+    server.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
