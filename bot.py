@@ -5,7 +5,12 @@ import os
 TOKEN = "8320449341:AAEPHiKR2b0jauEY-Sp9o1B0q3i4PijbRiQ"
 ADMIN_ID = 8910933168
 DB_FILE = 'anime_db.json'
-bot = telebot.TeleBot(TOKEN)
+bot = # Boshqa hamma narsadan oldin buni qo'ying:
+try:
+    bot.delete_webhook(drop_pending_updates=True)
+except:
+    pass
+ telebot.TeleBot(TOKEN)
 
 # Bazani boshqarish
 def load_db():
