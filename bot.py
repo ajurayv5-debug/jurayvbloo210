@@ -1,10 +1,18 @@
-@server.route("/")
-def webhook():
-    # Eski webhookni butunlay o'chiramiz
-    bot.remove_webhook()
-    # Yangisini o'rnatamiz (URLni o'z manzilingizga almashtiring!)
-    url = 'https://sizning-botingiz-nomi.onrender.com/' + TOKEN
-    if bot.set_webhook(url=url):
-        return "Webhook muvaffaqiyatli o'rnatildi!", 200
-    else:
-        return "Webhook o'rnatishda xatolik!", 500
+import telebot
+
+TOKEN = "8320449341:AAEPHiKR2b0jauEY-Sp9o1B0q3i4PijbRiQ"
+bot = telebot.TeleBot(TOKEN)
+
+# Eski ulanishlarni uzish (409 xatosini yo'qotish uchun)
+bot.remove_webhook()
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.send_message(message.chat.id, "Bot ishlamoqda! 😊")
+
+@bot.message_handler(func=lambda message: True)
+def echo(message):
+    bot.reply_to(message, "Bot xabarni qabul qildi!")
+
+print("Bot polling rejimida ishga tushdi...")
+bot.infinity_polling(timeout=10, long_polling_timeout=5)
