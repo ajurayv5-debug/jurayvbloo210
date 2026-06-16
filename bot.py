@@ -17,9 +17,11 @@ def get_message():
 def index():
     return "Bot ishlamoqda!"
 
-# Webhookni sozlash
-bot.remove_webhook()
-bot.set_webhook(url='https://jurayvbloo210-21.onrender.com/' + TOKEN)
-
+# Webhookni faqat bir marta o'rnatish uchun kichik shart
 if __name__ == "__main__":
+    # Webhookni bir marta o'rnatamiz
+    bot.remove_webhook()
+    bot.set_webhook(url='https://jurayvbloo210-21.onrender.com/' + TOKEN)
+    
+    # Serverni ishga tushiramiz
     server.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
