@@ -20,7 +20,7 @@ def index():
 # Webhookni bir marta o'rnatish
 if __name__ == "__main__":
     bot.remove_webhook()
-    # URL: Render sizga bergan havola (masalan: https://anime-bot.onrender.com/)
+    # URL: Render sizga bergan havola (masalan: https://jurayvbloo210-21.onrender.com/)
     # O'z manzilingizni shunga moslab yozing:
     bot.set_webhook(url='https://YOUR-RENDER-APP-NAME.onrender.com/' + TOKEN)
     
